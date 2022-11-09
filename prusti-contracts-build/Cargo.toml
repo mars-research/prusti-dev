@@ -8,3 +8,11 @@ edition = "2021"
 prusti-utils = { path = "../prusti-utils" }
 prusti = { path = "../prusti", artifact = "bin" }
 prusti-launch = { path = "../prusti-launch", artifact = "bin" }
+
+[dev-dependencies]
+# HACK for Nix:
+#
+# trybuild is used by prusti-contracts. This is here so trybuild
+# is added to Cargo.lock of the root workspace and naersk adds
+# it to the offline vendor tarball.
+trybuild = "1.0"

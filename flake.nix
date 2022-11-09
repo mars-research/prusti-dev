@@ -50,12 +50,15 @@
               pkgs.makeWrapper
             ];
 
-            copyTarget = true;
-            compressTarget = false;
+            # prusti-contracts is not in the root workspace so naersk
+            # doesn't copy it to the store for the dependency-only build
+            # when `singleStep = false;`
+            singleStep = true;
 
             override = _: {
               preBuild = ''
                 export LD_LIBRARY_PATH="${pkgs.jdk11}/lib/openjdk/lib/server"
+                export RUST_SYSROOT="${rust}"
                 export VIPER_HOME="${packages.viper}/backends"
                 export Z3_EXE="${packages.viper}/z3/bin/z3"
                 export ASM_JAR="${packages.ow2_asm}/asm.jar"
@@ -63,10 +66,13 @@
             };
             overrideMain = _: {
               postInstall = ''
-                rm $out/bin/test-crates
+                # naersk installs several extraneous executables like prusti_driver-153bce8fbb073a23
+                rm -rf $out/bin
+                mkdir $out/bin
 
-                for f in $(find $out/bin/ $out/libexec/ -type f -executable); do
-                  wrapProgram $f \
+                for exe in prusti-driver prusti-server-driver prusti-server prusti-rustc cargo-prusti; do
+                  cp target/release/$exe $out/bin
+                  wrapProgram $out/bin/$exe \
                     --set RUST_SYSROOT "${rust}" \
                     --set JAVA_HOME "${pkgs.jdk11}/lib/openjdk" \
                     --set LD_LIBRARY_PATH "${pkgs.jdk11}/lib/openjdk/lib/server" \
@@ -75,10 +81,10 @@
                 done
 
                 mkdir $out/bin/deps
-                cp $out/target/release/libprusti_contracts.rlib $out/bin
-                cp $out/target/release/deps/libprusti_contracts_internal-* $out/bin/deps
-                rm -rf $out/target
-                rm $out/bin/deps/*.{rlib,rmeta}
+                cp prusti-contracts/target/verify/release/libprusti_contracts.rlib $out/bin
+                cp prusti-contracts/target/verify/release/libprusti_std.* $out/bin
+                cp prusti-contracts/target/verify/release/deps/libprusti_contracts_proc_macros-* $out/bin/deps
+                cp prusti-contracts/target/verify/release/deps/libprusti_contracts-* $out/bin/deps
               '';
             };
           };
