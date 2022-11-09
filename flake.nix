@@ -83,11 +83,34 @@
             };
           };
 
-          viper = pkgs.fetchzip {
-            name = "viper";
-            url = "https://viper.ethz.ch/downloads/ViperToolsNightlyLinux.zip";
-            stripRoot = false;
-            hash = "sha256-82vnyO7QWaLzehnBzPJxuEmdqK0MnWWwQnmdLq28sQc=";
+          viper = pkgs.stdenv.mkDerivation rec {
+            pname = "viper-bin";
+            version = "2022-10-31-1114";
+            src = pkgs.fetchzip {
+              url = "https://github.com/viperproject/viper-ide/releases/download/v-${version}/ViperToolsLinux.zip";
+              hash = "sha256-4Cm8C/JRLTtXuAoAUg3991Buhx7pxpXIKLwBcHU4oyM=";
+              stripRoot = false;
+            };
+
+            nativeBuildInputs = with pkgs; [
+              autoPatchelfHook
+            ];
+
+            buildInputs = with pkgs; [
+              stdenv.cc.cc
+              krb5
+              lttng-ust_2_12
+              zlib
+            ];
+
+            dontConfigure = true;
+            dontBuild = true;
+
+            installPhase = ''
+              runHook preInstall
+              cp -r $src $out
+              runHook postInstall
+            '';
           };
 
           ow2_asm = pkgs.stdenv.mkDerivation rec {
