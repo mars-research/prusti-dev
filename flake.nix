@@ -4,7 +4,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     naersk = {
-      url = "github:nmattia/naersk";
+      url = "github:nix-community/naersk";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     rust-overlay = {
@@ -60,7 +60,7 @@
                 export LD_LIBRARY_PATH="${pkgs.jdk11}/lib/openjdk/lib/server"
                 export RUST_SYSROOT="${rust}"
                 export VIPER_HOME="${packages.viper}/backends"
-                export Z3_EXE="${packages.viper}/z3/bin/z3"
+                export Z3_EXE="${pkgs.z3}/bin/z3"
                 export ASM_JAR="${packages.ow2_asm}/asm.jar"
               '';
             };
@@ -73,11 +73,11 @@
                 for exe in prusti-driver prusti-server-driver prusti-server prusti-rustc cargo-prusti; do
                   cp target/release/$exe $out/bin
                   wrapProgram $out/bin/$exe \
-                    --set RUST_SYSROOT "${rust}" \
+                    --set RUST_SYSROOT "$RUST_SYSROOT" \
+                    --set VIPER_HOME "$VIPER_HOME" \
+                    --set Z3_EXE "$Z3_EXE" \
                     --set JAVA_HOME "${pkgs.jdk11}/lib/openjdk" \
-                    --set LD_LIBRARY_PATH "${pkgs.jdk11}/lib/openjdk/lib/server" \
-                    --set VIPER_HOME "${packages.viper}/backends" \
-                    --set Z3_EXE "${packages.viper}/z3/bin/z3"
+                    --suffix LD_LIBRARY_PATH : "${pkgs.jdk11}/lib/openjdk/lib/server"
                 done
 
                 mkdir $out/bin/deps
